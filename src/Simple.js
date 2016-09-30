@@ -47,11 +47,9 @@ var Simple = function() {
 
         "type":"Live2D Model Setting",
         "name":"haru",
-        "model":"../../assets/haru/haru.moc",
+        "model":"../../assets/hibiki/hibiki.moc",
         "textures":[
-            "../../assets/haru/haru.1024/texture_00.png",
-            "../../assets/haru/haru.1024/texture_01.png",
-            "../../assets/haru/haru.1024/texture_02.png"
+            "../../assets/hibiki/runtime/hibiki.2048/texture_00.png"
         ]
     };
 
