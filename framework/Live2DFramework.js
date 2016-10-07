@@ -7,7 +7,7 @@
  */
 //============================================================
 //============================================================
-//  class L2DBaseModel         
+//  class L2DBaseModel
 //============================================================
 //============================================================
 function L2DBaseModel()
@@ -34,7 +34,7 @@ function L2DBaseModel()
     this.expressionManager = new L2DMotionManager(); //L2DMotionManager
     this.motions = {};
     this.expressions = {};
-    
+
     this.isTexLoaded = false;
 }
 
@@ -161,7 +161,7 @@ L2DBaseModel.prototype.getExpressionManager = function()
 //    L2DBaseModel # loadModelData()
 //============================================================
 L2DBaseModel.prototype.loadModelData   = function(path/*String*/, callback)
-{   
+{
     /*
     if( this.live2DModel != null ) {
         this.live2DModel.deleteTextures();
@@ -174,14 +174,14 @@ L2DBaseModel.prototype.loadModelData   = function(path/*String*/, callback)
     pm.loadLive2DModel(path, function(l2dModel) {
         thisRef.live2DModel = l2dModel;
         thisRef.live2DModel.saveParam();
-        
+
         var _err = Live2D.getError();
 
         if( _err != 0 ) {
             console.error("Error : Failed to loadModelData().");
             return;
         }
-        
+
         thisRef.modelMatrix = new L2DModelMatrix(
             thisRef.live2DModel.getCanvasWidth(),
             thisRef.live2DModel.getCanvasHeight()); //L2DModelMatrix
@@ -199,31 +199,31 @@ L2DBaseModel.prototype.loadModelData   = function(path/*String*/, callback)
 L2DBaseModel.prototype.loadTexture     = function(no/*int*/, path/*String*/, callback)
 {
     texCounter++;
- 
+
     var pm = Live2DFramework.getPlatformManager(); //IPlatformManager
-    
+
     if( this.debugMode ) pm.log("Load Texture : " + path);
-    
+
     var thisRef = this;
     pm.loadTexture(this.live2DModel , no , path, function(){
         texCounter--;
         if(texCounter == 0) thisRef.isTexLoaded = true;
         if (typeof callback == "function") callback();
     });
-    
+
 }
 
 //============================================================
 //    L2DBaseModel # loadMotion()
 //============================================================
 L2DBaseModel.prototype.loadMotion      = function(name/*String*/, path /*String*/, callback)
-{    
+{
     var pm = Live2DFramework.getPlatformManager(); //IPlatformManager
-    
+
     if(this.debugMode) pm.log("Load Motion : " + path);
-    
+
     var motion = null; //Live2DMotion
-    
+
     var thisRef = this;
     pm.loadBytes(path, function(buf) {
         motion = Live2DMotion.loadMotion(buf);
@@ -232,7 +232,7 @@ L2DBaseModel.prototype.loadMotion      = function(name/*String*/, path /*String*
         }
         callback(motion);
     });
-    
+
 }
 
 //============================================================
@@ -241,9 +241,9 @@ L2DBaseModel.prototype.loadMotion      = function(name/*String*/, path /*String*
 L2DBaseModel.prototype.loadExpression  = function(name/*String*/, path /*String*/, callback)
 {
     var pm = Live2DFramework.getPlatformManager(); //IPlatformManager
-    
+
     if( this.debugMode ) pm.log("Load Expression : " + path);
-    
+
     var thisRef = this;
     pm.loadBytes(path, function(buf) {
         if(name != null) {
@@ -294,17 +294,17 @@ L2DBaseModel.prototype.loadPhysics     = function(path/*String*/)
 //    L2DBaseModel # hitTestSimple()
 //============================================================
 L2DBaseModel.prototype.hitTestSimple = function(drawID, testX, testY)
-{   
+{
     var drawIndex = this.live2DModel.getDrawDataIndex(drawID);
-    
+
     if( drawIndex < 0 ) return false;
-    
+
     var points = this.live2DModel.getTransformedPoints(drawIndex);
     var left = this.live2DModel.getCanvasWidth();
     var right = 0;
     var top = this.live2DModel.getCanvasHeight();
     var bottom = 0;
-    
+
     for( var j = 0; j < points.length; j = j + 2 ) {
         var x = points[j];
         var y = points[j + 1];
@@ -316,7 +316,7 @@ L2DBaseModel.prototype.hitTestSimple = function(drawID, testX, testY)
     }
     var tx = this.modelMatrix.invertTransformX(testX);
     var ty = this.modelMatrix.invertTransformY(testY);
-    
+
     return ( left <= tx && tx <= right && top <= ty && ty <= bottom );
 }
 
@@ -351,19 +351,19 @@ L2DExpressionMotion.TYPE_MULT           = 2;
 //    static L2DExpressionMotion.loadJson()
 //============================================================
 L2DExpressionMotion.loadJson        = function(buf)
-{    
+{
     var ret = new L2DExpressionMotion();
-    
+
     var pm = Live2DFramework.getPlatformManager();
     var json = pm.jsonParseFromBytes(buf);
 
     ret.setFadeIn(parseInt(json.fade_in) > 0 ? parseInt(json.fade_in) : 1000);
     ret.setFadeOut(parseInt(json.fade_out) > 0 ? parseInt(json.fade_out) : 1000);
-    
+
     if(json.params == null) {
         return ret;
     }
-    
+
     var params = json.params;
     var paramNum = params.length;
     ret.paramList = []; //ArrayList<L2DExpressionParam>
@@ -394,15 +394,15 @@ L2DExpressionMotion.loadJson        = function(buf)
             if(defaultValue == 0 ) defaultValue = 1;
             value = value / defaultValue;
         }
-        
+
         var item = new L2DExpressionParam(  );
         item.id = paramID;
         item.type = calcTypeInt;
         item.value = value;
-        
+
         ret.paramList.push(item);
     }
-    
+
      return ret;
 }
 
@@ -421,7 +421,7 @@ L2DExpressionMotion.prototype.updateParamExe  = function(model /*ALive2DModel*/,
         else if(param.type == L2DExpressionMotion.TYPE_MULT) {
             model.multParamFloat(param.id, param.value, weight);
         }
-        else if(param.type == L2DExpressionMotion.TYPE_SET) {            
+        else if(param.type == L2DExpressionMotion.TYPE_SET) {
             model.setParamFloat(param.id, param.value, weight);
         }
     }
@@ -429,7 +429,7 @@ L2DExpressionMotion.prototype.updateParamExe  = function(model /*ALive2DModel*/,
 
 //============================================================
 //============================================================
-//  class L2DExpressionParam   
+//  class L2DExpressionParam
 //============================================================
 //============================================================
 function L2DExpressionParam()
@@ -449,14 +449,14 @@ function L2DExpressionParam()
 
 //============================================================
 //============================================================
-//  class L2DEyeBlink          
+//  class L2DEyeBlink
 //============================================================
 //============================================================
 function L2DEyeBlink()
 {
-    this.nextBlinkTime   = null /* TODO NOT INIT */; // 
-    this.stateStartTime  = null /* TODO NOT INIT */; // 
-    this.blinkIntervalMsec = null /* TODO NOT INIT */; // 
+    this.nextBlinkTime   = null /* TODO NOT INIT */; //
+    this.stateStartTime  = null /* TODO NOT INIT */; //
+    this.blinkIntervalMsec = null /* TODO NOT INIT */; //
     this.eyeState = EYE_STATE.STATE_FIRST;
     this.blinkIntervalMsec = 4000;
     this.closingMotionMsec = 100;
@@ -567,12 +567,12 @@ EYE_STATE.STATE_OPENING        = "STATE_OPENING"
 
 //============================================================
 //============================================================
-//  class L2DMatrix44          
+//  class L2DMatrix44
 //============================================================
 //============================================================
 function L2DMatrix44()
 {
-    this.tr              = new Float32Array(16); // 
+    this.tr              = new Float32Array(16); //
     this.identity();
 }
 
@@ -601,7 +601,7 @@ L2DMatrix44.mul             = function( a/*float[]*/, b/*float[]*/, dst/*float[]
 //============================================================
 L2DMatrix44.prototype.identity        = function()
 {
-    for( var i/*:int*/ = 0; i < 16; i++ ) 
+    for( var i/*:int*/ = 0; i < 16; i++ )
         this.tr[i] = ( ( i % 5 ) == 0 ) ? 1 : 0;
 }
 
@@ -750,7 +750,7 @@ function L2DModelMatrix(w/*float*/, h/*float*/){
 }
 
 //L2DModelMatrix extends L2DMatrix44
-L2DModelMatrix.prototype = new L2DMatrix44(); 
+L2DModelMatrix.prototype = new L2DMatrix44();
 
 //============================================================
 //    L2DModelMatrix # setPosition()
@@ -876,7 +876,7 @@ function L2DMotionManager()
     MotionQueueManager.prototype.constructor.call(this);
     this.currentPriority = null;
     this.reservePriority = null;
-    
+
     this.super = MotionQueueManager.prototype;
 }
 
@@ -910,9 +910,9 @@ L2DMotionManager.prototype.reserveMotion   = function(priority/*int*/)
     if(this.currentPriority >= priority) {
         return false;
     }
-    
+
     this.reservePriority = priority;
-    
+
     return true;
 }
 
@@ -930,11 +930,11 @@ L2DMotionManager.prototype.setReservePriority = function(val/*int*/)
 L2DMotionManager.prototype.updateParam     = function(model/*ALive2DModel*/)
 {
     var updated = MotionQueueManager.prototype.updateParam.call(this, model);
-    
+
     if(this.isFinished()) {
         this.currentPriority = 0;
     }
-    
+
     return updated;
 }
 
@@ -960,11 +960,11 @@ L2DMotionManager.prototype.startMotionPrio = function(motion/*AMotion*/, priorit
 
 //============================================================
 //============================================================
-//  class L2DPhysics           
+//  class L2DPhysics
 //============================================================
 //============================================================
 function L2DPhysics()
-{ 
+{
     this.physicsList = new Array(); //ArrayList<PhysicsHair>
     this.startTimeMSec = UtSystem.getUserTimeMSec();
 }
@@ -1056,7 +1056,7 @@ L2DPhysics.prototype.updateParam     = function(model/*ALive2DModel*/)
 
 //============================================================
 //============================================================
-//  class L2DPose              
+//  class L2DPose
 //============================================================
 //============================================================
 function L2DPose()
@@ -1071,7 +1071,7 @@ function L2DPose()
 //    static L2DPose.load()
 //============================================================
 L2DPose.load            = function(buf/*byte[]*/)
-{    
+{
     var ret = new L2DPose(); //L2DPose
     var pm = Live2DFramework.getPlatformManager();
     var json = pm.jsonParseFromBytes(buf);
@@ -1097,7 +1097,7 @@ L2DPose.load            = function(buf/*byte[]*/)
         }
         ret.partsGroups.push(partsGroup);
     }
-    
+
     return ret;
 }
 
@@ -1107,12 +1107,12 @@ L2DPose.load            = function(buf/*byte[]*/)
 L2DPose.prototype.updateParam     = function(model/*ALive2DModel*/)
 {
     if(model == null) return ;
-    
+
     if(!(model == this.lastModel)) {
         this.initParam(model);
     }
     this.lastModel = model;
-    
+
     var curTime = UtSystem.getTimeMSec();
     var deltaTimeSec = ((this.lastTime == 0) ? 0 : (curTime - this.lastTime) / 1000.0);
     this.lastTime = curTime;
@@ -1222,12 +1222,12 @@ L2DPose.prototype.copyOpacityOtherParts = function(model/*ALive2DModel*/, partsG
 
 //============================================================
 //============================================================
-//  class L2DPartsParam        
+//  class L2DPartsParam
 //============================================================
 //============================================================
 function L2DPartsParam(id/*String*/){
     this.paramIndex      = -1;
-    this.partsIndex      = -1; 
+    this.partsIndex      = -1;
     this.link            = null; // ArrayList<L2DPartsParam>
     this.id = id;
 }
@@ -1236,7 +1236,7 @@ function L2DPartsParam(id/*String*/){
 //    L2DPartsParam # initIndex()
 //============================================================
 L2DPartsParam.prototype.initIndex       = function(model/*ALive2DModel*/)
-{   
+{
     this.paramIndex = model.getParamIndex("VISIBLE:" + this.id);
     this.partsIndex = model.getPartsDataIndex(PartsDataID.getID(this.id));
     model.setParamFloat(this.paramIndex, 1);
@@ -1251,7 +1251,7 @@ L2DPartsParam.prototype.initIndex       = function(model/*ALive2DModel*/)
 
 //============================================================
 //============================================================
-//  class L2DTargetPoint       
+//  class L2DTargetPoint
 //============================================================
 //============================================================
 function L2DTargetPoint()
@@ -1420,18 +1420,18 @@ L2DViewMatrix.prototype.isMinScale      = function()
 //============================================================
 L2DViewMatrix.prototype.adjustTranslate = function(shiftX/*float*/, shiftY/*float*/)
 {
-    if(this.tr[0] * this.maxLeft + (this.tr[12] + shiftX) > this.screenLeft) 
+    if(this.tr[0] * this.maxLeft + (this.tr[12] + shiftX) > this.screenLeft)
         shiftX = this.screenLeft - this.tr[0] * this.maxLeft - this.tr[12];
-    if(this.tr[0] * this.maxRight + (this.tr[12] + shiftX) < this.screenRight) 
+    if(this.tr[0] * this.maxRight + (this.tr[12] + shiftX) < this.screenRight)
         shiftX = this.screenRight - this.tr[0] * this.maxRight - this.tr[12];
-    if(this.tr[5] * this.maxTop + (this.tr[13] + shiftY) < this.screenTop) 
+    if(this.tr[5] * this.maxTop + (this.tr[13] + shiftY) < this.screenTop)
         shiftY = this.screenTop - this.tr[5] * this.maxTop - this.tr[13];
-    if(this.tr[5] * this.maxBottom + (this.tr[13] + shiftY) > this.screenBottom) 
+    if(this.tr[5] * this.maxBottom + (this.tr[13] + shiftY) > this.screenBottom)
         shiftY = this.screenBottom - this.tr[5] * this.maxBottom - this.tr[13];
-    
-    var tr1 = [1, 0, 0, 0, 
+
+    var tr1 = [1, 0, 0, 0,
                0, 1, 0, 0,
-               0, 0, 1, 0, 
+               0, 0, 1, 0,
                shiftX, shiftY, 0, 1 ];
     L2DMatrix44.mul(tr1, this.tr, this.tr);
 }
@@ -1448,17 +1448,17 @@ L2DViewMatrix.prototype.adjustScale     = function(cx/*float*/, cy/*float*/, sca
     else if(targetScale > this.max) {
         if(this.tr[0] > 0) scale = this.max / this.tr[0];
     }
-    var tr1 = [1, 0, 0, 0, 
-               0, 1, 0, 0, 
-               0, 0, 1, 0, 
+    var tr1 = [1, 0, 0, 0,
+               0, 1, 0, 0,
+               0, 0, 1, 0,
                cx, cy, 0, 1];
     var tr2 = [scale, 0, 0, 0,
                0, scale, 0, 0,
-               0, 0, 1, 0, 
+               0, 0, 1, 0,
                0, 0, 0, 1 ];
-    var tr3 = [1, 0, 0, 0, 
-               0, 1, 0, 0, 
-               0, 0, 1, 0, 
+    var tr3 = [1, 0, 0, 0,
+               0, 1, 0, 0,
+               0, 0, 1, 0,
                -cx, -cy, 0, 1 ];
     L2DMatrix44.mul(tr3, this.tr, this.tr);
     L2DMatrix44.mul(tr2, this.tr, this.tr);
@@ -1561,7 +1561,7 @@ L2DViewMatrix.prototype.getMaxTop       = function()
 
 //============================================================
 //============================================================
-//  class Live2DFramework      
+//  class Live2DFramework
 //============================================================
 //============================================================
 function Live2DFramework()
