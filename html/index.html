@@ -6,17 +6,54 @@
         </meta>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=4.0">
         </meta>
+        <style>
+            html, body {
+                oveflow: hidden;
+                height: 100%;
+            }
+
+            body{
+                margin:0px ;
+                padding:0px ;
+            }
+
+            #glcanvas {
+                /*
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                */
+                background-size: 150%;
+                background-position: 50% 50%;
+                background-image: url();
+            }
+
+        </style>
+
     </head>
 
     <body onload="Simple()">
-        <canvas id="glcanvas" width = "256px" height="256px" style="border:dashed 1px #CCC"></canvas>
+        <canvas id="glcanvas" width = "256px" height="512px" style="border:dashed 1px #CCC"></canvas>
+
 
         <div id="myconsole" style="color:#BBB">---- Log ----</div>
 
         <!-- Live2D Library -->
-        <script src="../../lib/live2d.min.js"></script>
+        <script src="../lib/live2d.min.js"></script>
+
+        <!-- Live2D Framework -->
+        <script src="../framework/Live2DFramework.js"></script>
+
 
         <!-- User's Script -->
-        <script src="../../src/Simple.js"></script>
+        <script src="../src/utils/MatrixStack.js"></script>
+        <script src="../src/utils/ModelSettingJson.js"></script>
+        <script src="../src/PlatformManager.js"></script>
+        <script src="../src/LAppDefine.js"></script>
+        <script src="../src/LAppModel.js"></script>
+        <script src="../src/LAppLive2DManager.js"></script>
+        <script src="../src/Simple.js"></script>
+
     </body>
 </html>
