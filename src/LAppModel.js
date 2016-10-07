@@ -335,6 +335,7 @@ LAppModel.prototype.startRandomMotion = function(name, priority)
  */
 LAppModel.prototype.startMotion = function(name, no, priority)
 {
+  if (LAppDefine.DEBUG_LOG)
      console.log("startMotion : " + name + " " + no + " " + priority);
 
     var motionName = this.modelSetting.getMotionFile(name, no);

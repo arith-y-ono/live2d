@@ -129,6 +129,7 @@ LAppLive2DManager.prototype.minScaleEvent = function()
  */
 LAppLive2DManager.prototype.tapEvent = function(x, y)
 {
+  if (LAppDefine.DEBUG_LOG)
         console.log("tapEvent view x:" + x + " y:" + y);
 
     for (var i = 0; i < this.models.length; i++)
