@@ -1,7 +1,7 @@
 var LAppDefine = {
 
     // デバッグ。trueのときにログを表示する。
-    DEBUG_LOG : true,
+    DEBUG_LOG : false,
     DEBUG_MOUSE_LOG : false, // マウス関連の冗長なログ
     // DEBUG_DRAW_HIT_AREA : false, // 当たり判定の可視化
     // DEBUG_DRAW_ALPHA_MODEL : false, // 半透明のモデル描画を行うかどうか。
