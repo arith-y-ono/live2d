@@ -5,7 +5,7 @@
 		"hibiki.2048/texture_00.png"
 	],
 	"motions":{
-		"tap_body":[
+		"null":[
 			{
 				"file":"motions/hibiki_01.mtn",
 				"sound":"sounds/hibiki_01.mp3"
