@@ -1,5 +1,9 @@
 var thisRef = this;
-
+// JavaScriptで発生したエラーを取得
+ window.onerror = function(msg, url, line, col, error) {
+    var errmsg = "file:" + url + "<br>line:" + line + " " + msg;
+     l2dError(errmsg);
+ }
 function Simple()
 {
     this.platform = window.navigator.platform.toLowerCase();
@@ -100,6 +104,7 @@ function init()
     // WebGLのコンテキストを取得する
 	this.gl = getWebGLContext();
 	if (!this.gl) {
+    l2dError("Failed to create WebGL context.");
         return;
     }
 
