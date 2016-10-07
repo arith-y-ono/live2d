@@ -1,88 +1,71 @@
-/**
-*  Sample.js
-*
-*  You can modify and use this source freely
-*  only for the development of application related Live2D.
-*
-*  (c) Live2D Inc. All rights reserved.
-*/
+var thisRef = this;
 
-var Simple = function() {
+function Simple()
+{
+    this.platform = window.navigator.platform.toLowerCase();
 
-    /*
-    * Live2Dモデルのインスタンス
-    */
-    this.live2DModel = null;
+    this.live2DMgr = new LAppLive2DManager();
 
-    /*
-    * アニメーションを停止するためのID
-    */
-    this.requestID = null;
+    this.isDrawStart = false;
 
-    /*
-    * モデルのロードが完了したら true
-    */
-    this.loadLive2DCompleted = false;
+    this.gl = null;
+    this.canvas = null;
 
-    /*
-    * モデルの初期化が完了したら true
-    */
-    this.initLive2DCompleted = false;
+    this.dragMgr = null; /*new L2DTargetPoint();*/ // ドラッグによるアニメーションの管理
+    this.viewMatrix = null; /*new L2DViewMatrix();*/
+    this.projMatrix = null; /*new L2DMatrix44()*/
+    this.deviceToScreen = null; /*new L2DMatrix44();*/
 
-    /*
-    * WebGL Image型オブジェクトの配列
-    */
-    this.loadedImages = [];
+    this.drag = false; // ドラッグ中かどうか
+    this.oldLen = 0;    // 二本指タップした時の二点間の距離
 
-    /*
-    * Live2D モデル設定。
-    */
-    this.modelDef = {
+    this.lastMouseX = 0;
+    this.lastMouseY = 0;
 
-        "type":"Live2D Model Setting",
-        "name":"haru",
-        "model":"../../assets/hibiki/hibiki.moc",
-        "textures":[
-            "../../assets/hibiki/runtime/hibiki.2048/texture_00.png"
-        ]
-    };
+    this.isModelShown = false;
 
-    // Live2Dの初期化
-    Live2D.init();
+    // モデル描画用canvasの初期化
+    initL2dCanvas("glcanvas");
+
+    // モデル用マトリクスの初期化と描画の開始
+    init();
+}
 
 
+function initL2dCanvas(canvasId)
+{
     // canvasオブジェクトを取得
-	var canvas = document.getElementById("glcanvas");
+	this.canvas = document.getElementById(canvasId);
 
-	// コンテキストを失ったとき
+    // イベントの登録
+    if(this.canvas.addEventListener) {
+        this.canvas.addEventListener("mousewheel", mouseEvent, false);
+        this.canvas.addEventListener("click", mouseEvent, false);
 
 	canvas.addEventListener("webglcontextlost", function(e) {
         loadLive2DCompleted = false;
         initLive2DCompleted = false;
+        this.canvas.addEventListener("mousedown", mouseEvent, false);
+        this.canvas.addEventListener("mousemove", mouseEvent, false);
+        this.canvas.addEventListener("mouseup", mouseEvent, false);
+        this.canvas.addEventListener("mouseout", mouseEvent, false);
+        this.canvas.addEventListener("contextmenu", mouseEvent, false);
 
-        var cancelAnimationFrame =
-            window.cancelAnimationFrame ||
-            window.mozCancelAnimationFrame;
-        cancelAnimationFrame(requestID); //アニメーションを停止
-
-        e.preventDefault();
-    }, false);
+        // タッチイベントに対応
+        this.canvas.addEventListener("touchstart", touchEvent, false);
+        this.canvas.addEventListener("touchend", touchEvent, false);
+        this.canvas.addEventListener("touchmove", touchEvent, false);
 
     // コンテキストが復元されたとき
 	canvas.addEventListener("webglcontextrestored" , function(e){
         Simple.initLoop(canvas);
     }, false);
+    }
 
-	// Init and start Loop
-	Simple.initLoop(canvas);
-};
+}
 
 
-/*
-* WebGLコンテキストを取得・初期化。
-* Live2Dの初期化、描画ループを開始。
-*/
-Simple.initLoop = function(canvas/*HTML5 canvasオブジェクト*/)
+function init()
 {
     //------------ WebGLの初期化 ------------
 
@@ -93,6 +76,46 @@ Simple.initLoop = function(canvas/*HTML5 canvasオブジェクト*/)
     };
 	var gl = Simple.getWebGLContext(canvas, para);
 	if (!gl) {
+    // 3Dバッファの初期化
+    var width = this.canvas.width;
+    var height = this.canvas.height;
+
+    this.dragMgr = new L2DTargetPoint();
+
+    // ビュー行列
+    var ratio = height / width;
+    var left = LAppDefine.VIEW_LOGICAL_LEFT;
+    var right = LAppDefine.VIEW_LOGICAL_RIGHT;
+    var bottom = -ratio;
+    var top = ratio;
+
+    this.viewMatrix = new L2DViewMatrix();
+
+    // デバイスに対応する画面の範囲。 Xの左端, Xの右端, Yの下端, Yの上端
+    this.viewMatrix.setScreenRect(left, right, bottom, top);
+
+    // デバイスに対応する画面の範囲。 Xの左端, Xの右端, Yの下端, Yの上端
+    this.viewMatrix.setMaxScreenRect(LAppDefine.VIEW_LOGICAL_MAX_LEFT,
+                                     LAppDefine.VIEW_LOGICAL_MAX_RIGHT,
+                                     LAppDefine.VIEW_LOGICAL_MAX_BOTTOM,
+                                     LAppDefine.VIEW_LOGICAL_MAX_TOP);
+
+    this.viewMatrix.setMaxScale(LAppDefine.VIEW_MAX_SCALE);
+    this.viewMatrix.setMinScale(LAppDefine.VIEW_MIN_SCALE);
+
+    this.projMatrix = new L2DMatrix44();
+    this.projMatrix.multScale(1, (width / height));
+
+    // マウス用スクリーン変換行列
+    this.deviceToScreen = new L2DMatrix44();
+    this.deviceToScreen.multTranslate(-width / 2.0, -height / 2.0);
+    this.deviceToScreen.multScale(2 / width, -2 / width);
+
+
+    // WebGLのコンテキストを取得する
+	this.gl = getWebGLContext();
+	if (!this.gl) {
+        l2dError("Failed to create WebGL context.");
         return;
     }
 
@@ -119,123 +142,262 @@ Simple.initLoop = function(canvas/*HTML5 canvasオブジェクト*/)
 			}
     })( i );
 	}
+=======
+	this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
+>>>>>>> master
 
-	//------------ 描画ループ ------------
+    changeModel();
 
-    (function tick() {
-        Simple.draw(gl); // 1回分描画
-
-        var requestAnimationFrame =
-            window.requestAnimationFrame ||
-            window.mozRequestAnimationFrame ||
-            window.webkitRequestAnimationFrame ||
-            window.msRequestAnimationFrame;
-		requestID = requestAnimationFrame( tick , canvas );// 一定時間後に自身を呼び出す
-    })();
-};
+    startDraw();
+}
 
 
-Simple.draw = function(gl/*WebGLコンテキスト*/)
+function startDraw() {
+    if(!this.isDrawStart) {
+        this.isDrawStart = true;
+        (function tick() {
+                draw(); // 1回分描画
+
+                var requestAnimationFrame =
+                    window.requestAnimationFrame ||
+                    window.mozRequestAnimationFrame ||
+                    window.webkitRequestAnimationFrame ||
+                    window.msRequestAnimationFrame;
+
+                // 一定時間後に自身を呼び出す
+                requestAnimationFrame(tick ,this.canvas);
+        })();
+    }
+}
+
+
+function draw()
 {
-	// Canvasをクリアする
-	gl.clear(gl.COLOR_BUFFER_BIT);
+    // l2dLog("--> draw()");
 
-	// Live2D初期化
-	if( ! live2DModel || ! loadLive2DCompleted )
-        return; //ロードが完了していないので何もしないで返る
+    MatrixStack.reset();
+    MatrixStack.loadIdentity();
 
-	// ロード完了後に初回のみ初期化する
-	if( ! initLive2DCompleted ){
-		initLive2DCompleted = true;
+    this.dragMgr.update(); // ドラッグ用パラメータの更新
+    this.live2DMgr.setDrag(this.dragMgr.getX(), this.dragMgr.getY());
 
-        // 画像からWebGLテクスチャを生成し、モデルに登録
-        for( var i = 0; i < loadedImages.length; i++ ){
-            //Image型オブジェクトからテクスチャを生成
-            var texName = Simple.createTexture(gl, loadedImages[i]);
+    // Canvasをクリアする
+	this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
-            live2DModel.setTexture(i, texName); //モデルにテクスチャをセット
+    MatrixStack.multMatrix(projMatrix.getArray());
+    MatrixStack.multMatrix(viewMatrix.getArray());
+    MatrixStack.push();
+
+    for (var i = 0; i < this.live2DMgr.numModels(); i++)
+    {
+        var model = this.live2DMgr.getModel(i);
+
+        if(model == null) return;
+
+        if (model.initialized && !model.updating)
+        {
+            model.update();
+            model.draw(this.gl);
+
+        }
+    }
+
+    MatrixStack.pop();
+}
+
+
+function changeModel()
+{
+    this.isModelShown = false;
+
+    this.live2DMgr.reloadFlg = true;
+    this.live2DMgr.count++;
+
+    this.live2DMgr.changeModel(this.gl);
+}
+
+/* ********** マウスイベント ********** */
+
+
+
+/*
+ * クリックされた方向を向く
+ * タップされた場所に応じてモーションを再生
+ */
+function modelTurnHead(event)
+{
+    thisRef.drag = true;
+
+    var rect = event.target.getBoundingClientRect();
+
+    var sx = transformScreenX(event.clientX - rect.left);
+    var sy = transformScreenY(event.clientY - rect.top);
+    var vx = transformViewX(event.clientX - rect.left);
+    var vy = transformViewY(event.clientY - rect.top);
+
+    if (LAppDefine.DEBUG_MOUSE_LOG)
+        l2dLog("onMouseDown device( x:" + event.clientX + " y:" + event.clientY + " ) view( x:" + vx + " y:" + vy + ")");
+
+    thisRef.lastMouseX = sx;
+    thisRef.lastMouseY = sy;
+
+    thisRef.dragMgr.setPoint(vx, vy); // その方向を向く
+
+    // タップした場所に応じてモーションを再生
+    thisRef.live2DMgr.tapEvent(vx, vy);
+}
+
+
+/*
+ * マウスを動かした時のイベント
+ */
+function followPointer(event)
+{
+<<<<<<< HEAD
+	var texture = gl.createTexture(); //テクスチャオブジェクトを作成する
+	if ( !texture ){
+        return -1;
+=======
+    var rect = event.target.getBoundingClientRect();
+
+    var sx = transformScreenX(event.clientX - rect.left);
+    var sy = transformScreenY(event.clientY - rect.top);
+    var vx = transformViewX(event.clientX - rect.left);
+    var vy = transformViewY(event.clientY - rect.top);
+
+    if (LAppDefine.DEBUG_MOUSE_LOG)
+        l2dLog("onMouseMove device( x:" + event.clientX + " y:" + event.clientY + " ) view( x:" + vx + " y:" + vy + ")");
+
+    if (thisRef.drag)
+    {
+        thisRef.lastMouseX = sx;
+        thisRef.lastMouseY = sy;
+
+        thisRef.dragMgr.setPoint(vx, vy); // その方向を向く
+>>>>>>> master
+    }
+}
+
+
+/*
+ * 正面を向く
+ */
+function lookFront()
+{
+    if (thisRef.drag)
+    {
+        thisRef.drag = false;
+    }
+
+    thisRef.dragMgr.setPoint(0, 0);
+}
+
+
+function mouseEvent(e)
+{
+    e.preventDefault();
+
+    if (e.type == "mousewheel") {
+
+        if (e.clientX < 0 || thisRef.canvas.clientWidth < e.clientX ||
+        e.clientY < 0 || thisRef.canvas.clientHeight < e.clientY)
+        {
+            return;
         }
 
-        // テクスチャの元画像の参照をクリア
-        loadedImages = null;
 
-        // OpenGLのコンテキストをセット
-        live2DModel.setGL(gl);
+    } else if (e.type == "mousedown") {
 
-        // 表示位置を指定するための行列を定義する
-        var s = 2.0 / live2DModel.getCanvasWidth(); //canvasの横幅を-1..1区間に収める
-        var matrix4x4 = [ s,0,0,0 , 0,-s,0,0 , 0,0,1,0 , -1.0,1,0,1 ];
-        live2DModel.setMatrix(matrix4x4);
-	}
+        // 右クリック以外なら処理を抜ける
+        if("button" in e && e.button != 0) return;
 
-	// キャラクターのパラメータを適当に更新
-    var t = UtSystem.getTimeMSec() * 0.001 * 2 * Math.PI; //1秒ごとに2π(1周期)増える
-    var cycle = 3.0; //パラメータが一周する時間(秒)
-    // PARAM_ANGLE_Xのパラメータが[cycle]秒ごとに-30から30まで変化する
-    live2DModel.setParamFloat("PARAM_ANGLE_X", 30 * Math.sin(t/cycle));
+        modelTurnHead(e);
+
+    } else if (e.type == "mousemove") {
+
+        followPointer(e);
+
+    } else if (e.type == "mouseup") {
+
+        // 右クリック以外なら処理を抜ける
+        if("button" in e && e.button != 0) return;
+
+        lookFront();
+
+    } else if (e.type == "mouseout") {
+
+        lookFront();
+
+    } else if (e.type == "contextmenu") {
+
+        changeModel();
+    }
+
+}
 
 
-    // Live2Dモデルを更新して描画
-    live2DModel.update(); // 現在のパラメータに合わせて頂点等を計算
-    live2DModel.draw();	// 描画
-};
+function touchEvent(e)
+{
+    e.preventDefault();
+
+    var touch = e.touches[0];
+
+    if (e.type == "touchstart") {
+        if (e.touches.length == 1) modelTurnHead(touch);
+        // onClick(touch);
+
+    } else if (e.type == "touchmove") {
+        followPointer(touch);
+
+        if (e.touches.length == 2) {
+            var touch1 = e.touches[0];
+            var touch2 = e.touches[1];
+
+            var len = Math.pow(touch1.pageX - touch2.pageX, 2) + Math.pow(touch1.pageY - touch2.pageY, 2);
+
+            thisRef.oldLen = len;
+        }
+
+    } else if (e.type == "touchend") {
+        lookFront();
+    }
+}
+
+
+/* ********** マトリックス操作 ********** */
+
+function transformViewX(deviceX)
+{
+    var screenX = this.deviceToScreen.transformX(deviceX); // 論理座標変換した座標を取得。
+    return viewMatrix.invertTransformX(screenX); // 拡大、縮小、移動後の値。
+}
+
+
+function transformViewY(deviceY)
+{
+    var screenY = this.deviceToScreen.transformY(deviceY); // 論理座標変換した座標を取得。
+    return viewMatrix.invertTransformY(screenY); // 拡大、縮小、移動後の値。
+}
+
+
+function transformScreenX(deviceX)
+{
+    return this.deviceToScreen.transformX(deviceX);
+}
+
+
+function transformScreenY(deviceY)
+{
+    return this.deviceToScreen.transformY(deviceY);
+}
 
 
 /*
 * WebGLのコンテキストを取得する
 */
-Simple.getWebGLContext = function(canvas/*HTML5 canvasオブジェクト*/)
+function getWebGLContext()
 {
-	var NAMES = [ "webgl" , "experimental-webgl" , "webkit-3d" , "moz-webgl"];
-
-    var param = {
-        alpha : true,
-        premultipliedAlpha : true
-    };
-
-	for( var i = 0; i < NAMES.length; i++ ){
-		try{
-			var ctx = canvas.getContext( NAMES[i], param );
-			if( ctx ) return ctx;
-		}
-		catch(e){}
-	}
-	return null;
-};
-
-
-/*
-* Image型オブジェクトからテクスチャを生成
-*/
-Simple.createTexture = function(gl/*WebGLコンテキスト*/, image/*WebGL Image*/)
-{
-	var texture = gl.createTexture(); //テクスチャオブジェクトを作成する
-	if ( !texture ){
-        return -1;
-    }
-
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 1);
-	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);	//imageを上下反転
-	gl.activeTexture( gl.TEXTURE0 );
-	gl.bindTexture( gl.TEXTURE_2D , texture );
-	gl.texImage2D( gl.TEXTURE_2D , 0 , gl.RGBA , gl.RGBA , gl.UNSIGNED_BYTE , image);
-
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-
-
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.bindTexture( gl.TEXTURE_2D , null );
-
-	return texture;
-};
-
-
-/*
-* ファイルをバイト配列としてロードする
-*/
-Simple.loadBytes = function(path , callback)
-{
+<<<<<<< HEAD
 	var request = new XMLHttpRequest();
 	request.open("GET", path , true);
 	request.responseType = "arraybuffer";
@@ -246,8 +408,45 @@ Simple.loadBytes = function(path , callback)
 			break;
 		default:
 			break;
-		}
-	}
+=======
+	var NAMES = [ "webgl" , "experimental-webgl" , "webkit-3d" , "moz-webgl"];
 
-    request.send(null);
+	for( var i = 0; i < NAMES.length; i++ ){
+		try{
+			var ctx = this.canvas.getContext(NAMES[i], {premultipliedAlpha : true});
+			if(ctx) return ctx;
+>>>>>>> master
+		}
+		catch(e){}
+	}
+	return null;
 };
+<<<<<<< HEAD
+=======
+
+
+/*
+* 画面ログを出力
+*/
+function l2dLog(msg) {
+    if(!LAppDefine.DEBUG_LOG) return;
+
+    var myconsole = document.getElementById("myconsole");
+    myconsole.innerHTML = myconsole.innerHTML + "<br>" + msg;
+
+    console.log(msg);
+}
+
+
+/*
+* 画面エラーを出力
+*/
+function l2dError(msg)
+{
+    if(!LAppDefine.DEBUG_LOG) return;
+
+    l2dLog( "<span style='color:red'>" + msg + "</span>");
+
+	console.error(msg);
+};
+>>>>>>> master
