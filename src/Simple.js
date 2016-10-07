@@ -7,12 +7,6 @@
 *  (c) Live2D Inc. All rights reserved.
 */
 
-// JavaScriptで発生したエラーを取得
-window.onerror = function(msg, url, line, col, error) {
-    var errmsg = "file:" + url + "<br>line:" + line + " " + msg;
-    Simple.myerror(errmsg);
-}
-
 var Simple = function() {
 
     /*
@@ -63,7 +57,6 @@ var Simple = function() {
 	// コンテキストを失ったとき
 
 	canvas.addEventListener("webglcontextlost", function(e) {
-        Simple.myerror("context lost");
         loadLive2DCompleted = false;
         initLive2DCompleted = false;
 
@@ -77,7 +70,6 @@ var Simple = function() {
 
     // コンテキストが復元されたとき
 	canvas.addEventListener("webglcontextrestored" , function(e){
-        Simple.myerror("webglcontext restored");
         Simple.initLoop(canvas);
     }, false);
 
@@ -101,7 +93,6 @@ Simple.initLoop = function(canvas/*HTML5 canvasオブジェクト*/)
     };
 	var gl = Simple.getWebGLContext(canvas, para);
 	if (!gl) {
-        Simple.myerror("Failed to create WebGL context.");
         return;
     }
 
@@ -126,10 +117,7 @@ Simple.initLoop = function(canvas/*HTML5 canvasオブジェクト*/)
                     loadLive2DCompleted = true;//全て読み終わった
                 }
 			}
-			loadedImages[tno].onerror = function() {
-				Simple.myerror("Failed to load image : " + modelDef.textures[tno]);
-			}
-		})( i );
+    })( i );
 	}
 
 	//------------ 描画ループ ------------
@@ -223,7 +211,6 @@ Simple.createTexture = function(gl/*WebGLコンテキスト*/, image/*WebGL Imag
 {
 	var texture = gl.createTexture(); //テクスチャオブジェクトを作成する
 	if ( !texture ){
-        mylog("Failed to generate gl texture name.");
         return -1;
     }
 
@@ -258,30 +245,9 @@ Simple.loadBytes = function(path , callback)
 			callback( request.response );
 			break;
 		default:
-			Simple.myerror( "Failed to load (" + request.status + ") : " + path );
 			break;
 		}
 	}
 
     request.send(null);
-};
-
-
-/*
-* 画面ログを出力
-*/
-Simple.mylog = function(msg/*string*/)
-{
-	var myconsole = document.getElementById("myconsole");
-	myconsole.innerHTML = myconsole.innerHTML + "<br>" + msg;
-	console.log(msg);
-};
-
-/*
-* 画面エラーを出力
-*/
-Simple.myerror = function(msg/*string*/)
-{
-    console.error(msg);
-	Simple.mylog( "<span style='color:red'>" + msg + "</span>");
 };
